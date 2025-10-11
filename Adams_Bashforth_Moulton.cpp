@@ -1,10 +1,16 @@
 #include "Adams_Bashforth_Moulton.h"
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
 // Метод Адамса-Башфорта-Моултона порядка для системы ОДУ
-void Adams_Bashforth_Moulton(std::vector<double> f(double, std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
+void Adams_Bashforth_Moulton(std::vector<double> f(double, std::vector<double>&), std::vector<double>& y, double t0, double t1, double h, std::ofstream* csv)
+{
+    for (int i=0; i<y.size()-1; i++)
+        *csv << y[i] << ", ";
+    *csv << y[y.size()-1] << std::endl;
+
     double t = t0;
     std::vector<double> y_1;
     y_1.resize(y.size());
@@ -51,6 +57,9 @@ void Adams_Bashforth_Moulton(std::vector<double> f(double, std::vector<double>&)
             }
         }
         t += h;
+        for (int i=0; i<y.size()-1; i++)
+            *csv << y[i] << ",  ";
+        *csv << y[y.size()-1] << std::endl;
     }
 
     while (t < t1)
@@ -82,9 +91,9 @@ void Adams_Bashforth_Moulton(std::vector<double> f(double, std::vector<double>&)
         }
         t+=h;
 
-        for (int i=0; i<y.size(); i++)
-            std::cout << y[i] << "  ";
-        std::cout << std::endl;
+        for (int i=0; i<y.size()-1; i++)
+            *csv << y[i] << ",  ";
+        *csv << y[y.size()-1] << std::endl;
 
     }
 }

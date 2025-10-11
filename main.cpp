@@ -7,7 +7,7 @@
 
 #define EPS 1e-5
 // коэффициенты
-#define M 1
+#define M 0
 double Kabs[2] = {1.029, 2.481};
 double Kel[2]  = {0.670, 0.649};
 double K1[2]   = {0.118, 0.949};
@@ -38,31 +38,40 @@ std::vector<double> System(double t, std::vector<double>& y)
     return dy_dt;
 }
 
-void func(double a)
-{
-    std::cout << K31[M] << std::endl;
-}
-
 int main()
 {
     std::vector<double> y = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double t0 = 0.0, t1 = 10.0, h = 0.1;
 
     HMODULE dll1 = LoadLibrary("RungeKutta.dll");
-    typedef int FT1(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double);
+    typedef int FT1(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double, std::ofstream*);
     FT1* RungeKutta = (FT1*)GetProcAddress(dll1, "RungeKutta");
 
     HMODULE dll2 = LoadLibrary("Adams_Bashforth_Moulton.dll");
-    typedef int FT2(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double);
+    typedef int FT2(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double, std::ofstream*);
     FT2* Adams_Bashforth_Moulton = (FT2*)GetProcAddress(dll2, "Adams_Bashforth_Moulton");
 
     HMODULE dll3 = LoadLibrary("Milne_Simpson.dll");
-    typedef int FT3(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double);
+    typedef int FT3(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double, std::ofstream*);
     FT3* Milne_Simpson = (FT3*)GetProcAddress(dll3, "Milne_Simpson");
 
-    RungeKutta(System, y, t0, t1, h);
-    //Adams_Bashforth_Moulton(System, y, t0, t1, h);
-    //Milne_Simpson(System, y, t0, t1, h);
+    char* name = (char*)"RungeKutta.csv";
+    std::ofstream csv1;
+    csv1.open(name);
+
+    char* name2 = (char*)"Milne_Simpson.csv";
+    std::ofstream csv2;
+    csv2.open(name2);
+
+    char* name3 = (char*)"Adams_Bashforth_Moulton.csv";
+    std::ofstream csv3;
+    csv3.open(name3);
+
+    RungeKutta(System, y, t0, t1, h, &csv1);
+    y = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    Adams_Bashforth_Moulton(System, y, t0, t1, h, &csv3);
+    y = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    Milne_Simpson(System, y, t0, t1, h, &csv2);
 
     return 0;
 }

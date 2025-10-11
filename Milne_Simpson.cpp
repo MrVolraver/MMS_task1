@@ -1,11 +1,16 @@
 #include "Milne_Simpson.h"
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
 // Метод Милна-Симсона
-void Milne_Simpson(std::vector<double> (*f)(double, const std::vector<double>&), std::vector<double>& y, double t0, double t1, double h)
+void Milne_Simpson(std::vector<double> (*f)(double, const std::vector<double>&), std::vector<double>& y, double t0, double t1, double h, std::ofstream* csv)
 {
+    for (int i=0; i<y.size()-1; i++)
+        *csv << y[i] << ",  ";
+    *csv << y[y.size()-1] << std::endl;
+
     double t = t0;
     std::vector<double> yim3;
     yim3.resize(y.size());
@@ -55,6 +60,9 @@ void Milne_Simpson(std::vector<double> (*f)(double, const std::vector<double>&),
             }
         }
         t += h;
+        for (int i=0; i<y.size()-1; i++)
+            *csv << y[i] << ",  ";
+        *csv << y[y.size()-1] << std::endl;
     }
     yi = y;
 
@@ -86,9 +94,9 @@ void Milne_Simpson(std::vector<double> (*f)(double, const std::vector<double>&),
         yim1 = yi;
         yi = y;
 
-        for (int i=0; i<y.size(); i++)
-            std::cout << y[i] << "  ";
-        std::cout << std::endl;
+        for (int i=0; i<y.size()-1; i++)
+            *csv << y[i] << ",  ";
+        *csv << y[y.size()-1] << std::endl;
 
     }
 }

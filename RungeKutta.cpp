@@ -1,11 +1,18 @@
 #include "RungeKutta.h"
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
 // Метод Рунге-Кутты 4-го порядка для системы ОДУ
-void RungeKutta(std::vector<double> f(double, std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
+void RungeKutta(std::vector<double> f(double, std::vector<double>&), std::vector<double>& y, double t0, double t1, double h, std::ofstream* csv)
+{
     double t = t0;
+
+    for (int i=0; i<y.size()-1; i++)
+        *csv << y[i] << ",  ";
+    *csv << y[y.size()-1] << std::endl;
+
     while (t < t1)
     {
         std::vector<double> k1 = f(t, y);
@@ -30,8 +37,8 @@ void RungeKutta(std::vector<double> f(double, std::vector<double>&), std::vector
 
         t += h;
 
-        for (int i=0; i<y.size(); i++)
-            std::cout << y[i] << "  ";
-        std::cout << std::endl;
+        for (int i=0; i<y.size()-1; i++)
+            *csv << y[i] << ",  ";
+        *csv << y[y.size()-1] << std::endl;
    }
 }
