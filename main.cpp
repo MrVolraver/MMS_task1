@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <iostream>
 #include <fstream>
+#include <functional>
 
 #define EPS 1e-5
 // коэффициенты
@@ -22,7 +23,7 @@ double K32[2]  = {0.580, 1.666};
 double K33[2]  = {2.343, 7.060};
 
 // Система ОДУ
-std::vector<double> System(double t, const std::vector<double>& y)
+std::vector<double> System(double t, std::vector<double>& y)
 {
     std::vector<double> dy_dt;
     dy_dt.resize(y.size());
@@ -37,230 +38,31 @@ std::vector<double> System(double t, const std::vector<double>& y)
     return dy_dt;
 }
 
-
-// Метод Рунге-Кутты 4-го порядка для системы ОДУ
-void rungeKutta4(std::vector<double> (*f)(double, const std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
-    double t = t0;
-    int flag;
-    while (t < t1)
-    {
-        flag = 1;
-        std::vector<double> k1 = f(t, y);
-        std::vector<double> yk1;
-        for (int i=0; i<y.size(); i++)
-            yk1.push_back(y[i]+h*k1[i]/2);
-        std::vector<double> k2 = f(t + h / 2, yk1);
-        std::vector<double> yk2;
-        for (int i=0; i<y.size(); i++)
-            yk2.push_back(y[i]+h*k2[i]/2);
-        std::vector<double> k3 = f(t + h / 2, yk2);
-        std::vector<double> yk3;
-        for (int i=0; i<y.size(); i++)
-            yk3.push_back(y[i]+h*k2[i]/2);
-        std::vector<double> k4 = f(t + h, yk3);
-
-        for (int i=0; i<y.size(); i++)
-        {
-            double delta =  h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
-            y[i] += delta;
-            if (delta > EPS)
-                flag = 0;
-        }
-
-        if (flag) break;
-
-        t += h;
-
-        for (int i=0; i<y.size(); i++)
-            std::cout << y[i] << "  ";
-        std::cout << std::endl;
-    }
-}
-
-// Метод Адамса-Башфорта-Моултона порядка для системы ОДУ
-void Adams_Bashforth_Moulton(std::vector<double> (*f)(double, const std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
-    double t = t0;
-    std::vector<double> y_1;
-    y_1.resize(y.size());
-    std::vector<double> y_2;
-    y_2.resize(y.size());
-    std::vector<double> y_3;
-    y_3.resize(y.size());
-
-    y_1=y;
- // Первые 4 шага вычисляются при помощи Рунге-Кутты
-    for (int i=0; i<3; i++)
-    {
-        std::vector<double> k1 = f(t, y);
-        std::vector<double> yk1;
-        for (int i=0; i<y.size(); i++)
-            yk1.push_back(y[i]+h*k1[i]/2);
-        std::vector<double> k2 = f(t + h / 2, yk1);
-        std::vector<double> yk2;
-        for (int i=0; i<y.size(); i++)
-            yk2.push_back(y[i]+h*k2[i]/2);
-        std::vector<double> k3 = f(t + h / 2, yk2);
-        std::vector<double> yk3;
-        for (int i=0; i<y.size(); i++)
-            yk3.push_back(y[i]+h*k2[i]/2);
-        std::vector<double> k4 = f(t + h, yk3);
-
-        for (int i=0; i<y.size(); i++)
-        {
-            double delta =  h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
-            y[i] += delta;
-        }
-
-        switch (i)
-        {
-        case 0:
-            {
-                y_2=y;
-                break;
-            }
-        case 1:
-            {
-                y_3=y;
-                break;
-            }
-        }
-        t += h;
-    }
-
-    while (t < t1)
-    {
-        //предиктор - Башфорт
-        std::vector<double> k1 = f(t, y);
-        std::vector<double> k2 = f(t-h, y_3);
-        std::vector<double> k3 = f(t-2*h, y_2);
-        std::vector<double> k4 = f(t - 3*h, y_1);
-        std::vector<double> y_;
-        y_.resize(y.size());
-        for (int i=0; i<y.size(); i++)
-        {
-            y_[i] = y[i] + h/24 * (55*k1[i] - 59*k2[i] + 37*k3[i] - 9*k4[i]);
-        }
-
-        k1 = f(t+h, y_);
-        k2 = f(t, y);
-        k3 = f(t - h, y_3);
-        k4 = f(t - 2*h, y_2);
-
-        y_1 = y_2;
-        y_2 = y_3;
-        y_3 = y;
-        // Корректор - Молутон
-        for (int i=0; i<y.size(); i++)
-        {
-            y[i] += h/24 * (9*k1[i] + 19*k2[i] - 5*k3[i] + k4[i]);
-        }
-        t+=h;
-
-        for (int i=0; i<y.size(); i++)
-            std::cout << y[i] << "  ";
-        std::cout << std::endl;
-
-    }
-}
-
-// Метод Милна-Симсона
-void Milne_Simpson(std::vector<double> (*f)(double, const std::vector<double>&), std::vector<double>& y, double t0, double t1, double h)
+void func(double a)
 {
-    double t = t0;
-    std::vector<double> yim3;
-    yim3.resize(y.size());
-    std::vector<double> yim2;
-    yim2.resize(y.size());
-    std::vector<double> yim1;
-    yim1.resize(y.size());
-    std::vector<double> yi;
-    yi.resize(y.size());
-
-    yim3=y;
-
-    // Рунге-Кутта для первых 3х шагов
-    for (int i=0; i<3; i++)
-    {
-        std::vector<double> k1 = f(t, y);
-        std::vector<double> yk1;
-        for (int i=0; i<y.size(); i++)
-            yk1.push_back(y[i]+h*k1[i]/2);
-        std::vector<double> k2 = f(t + h / 2, yk1);
-        std::vector<double> yk2;
-        for (int i=0; i<y.size(); i++)
-            yk2.push_back(y[i]+h*k2[i]/2);
-        std::vector<double> k3 = f(t + h / 2, yk2);
-        std::vector<double> yk3;
-        for (int i=0; i<y.size(); i++)
-            yk3.push_back(y[i]+h*k2[i]/2);
-        std::vector<double> k4 = f(t + h, yk3);
-
-        for (int i=0; i<y.size(); i++)
-        {
-            double delta =  h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
-            y[i] += delta;
-        }
-
-        switch (i)
-        {
-        case 0:
-            {
-                yim2=y;
-                break;
-            }
-        case 1:
-            {
-                yim1=y;
-                break;
-            }
-        }
-        t += h;
-    }
-    yi = y;
-
-    // Милн-Симпсон
-    while (t < t1)
-    {
-        //предиктор - Милн
-        std::vector<double> ki = f(t, yi);
-        std::vector<double> kiM1 = f(t-h, yim1);
-        std::vector<double> kiM2 = f(t-2*h, yim2);
-        std::vector<double> y_;
-        y_.resize(y.size());
-
-        for (int i=0; i<y.size(); i++)
-        {
-            y_[i] = yim3[i] + 4*h/3 * (2*ki[i] - kiM1[i] + 2*kiM2[i]);
-        }
-
-        std::vector<double> kiP1 = f(t+h, y_);
-
-        for (int i=0; i<y.size(); i++)
-        {
-            y[i] = yim1[i] + h/3 * (kiP1[i] + 4*ki[i] + kiM1[i]);
-        }
-        t+=h;
-
-        yim3 = yim2;
-        yim2 = yim1;
-        yim1 = yi;
-        yi = y;
-
-        for (int i=0; i<y.size(); i++)
-            std::cout << y[i] << "  ";
-        std::cout << std::endl;
-
-    }
+    std::cout << K31[M] << std::endl;
 }
-
 
 int main()
 {
     std::vector<double> y = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double t0 = 0.0, t1 = 10.0, h = 0.1;
 
+    HMODULE dll1 = LoadLibrary("RungeKutta.dll");
+    typedef int FT1(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double);
+    FT1* RungeKutta = (FT1*)GetProcAddress(dll1, "RungeKutta");
+
+    HMODULE dll2 = LoadLibrary("Adams_Bashforth_Moulton.dll");
+    typedef int FT2(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double);
+    FT2* Adams_Bashforth_Moulton = (FT2*)GetProcAddress(dll2, "Adams_Bashforth_Moulton");
+
+    HMODULE dll3 = LoadLibrary("Milne_Simpson.dll");
+    typedef int FT3(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double);
+    FT3* Milne_Simpson = (FT3*)GetProcAddress(dll3, "Milne_Simpson");
+
+    //RungeKutta(System, y, t0, t1, h);
     //Adams_Bashforth_Moulton(System, y, t0, t1, h);
-    //rungeKutta4(System, y, t0, t1, h);
-    Milne_Simpson(System, y, t0, t1, h);
+    //Milne_Simpson(System, y, t0, t1, h);
+
     return 0;
 }

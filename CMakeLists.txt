@@ -3,6 +3,8 @@ project(mms1)
 
 set(CMAKE_CXX_STANDARD 20)
 
+include_directories(.)
+
 add_executable(main main.cpp)
 
 add_library(RungeKutta SHARED RungeKutta.cpp)
@@ -10,3 +12,5 @@ add_library(RungeKutta SHARED RungeKutta.cpp)
 add_library(Adams_Bashforth_Moulton SHARED Adams_Bashforth_Moulton.cpp)
 
 add_library(Milne_Simpson SHARED Milne_Simpson.cpp)
+
+add_library(test SHARED test.cpp)

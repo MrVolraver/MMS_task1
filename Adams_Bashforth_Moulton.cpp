@@ -4,7 +4,7 @@
 #include <vector>
 
 // Метод Адамса-Башфорта-Моултона порядка для системы ОДУ
-void Adams_Bashforth_Moulton(std::vector<double> (*f)(double, const std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
+void Adams_Bashforth_Moulton(std::vector<double> f(double, std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
     double t = t0;
     std::vector<double> y_1;
     y_1.resize(y.size());

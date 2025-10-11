@@ -4,7 +4,7 @@
 #include <vector>
 
 // Метод Рунге-Кутты 4-го порядка для системы ОДУ
-void rungeKutta4(std::vector<double> (*f)(double, const std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
+void RungeKutta(std::vector<double> f(double, std::vector<double>&), std::vector<double>& y, double t0, double t1, double h) {
     double t = t0;
     while (t < t1)
     {
@@ -33,5 +33,5 @@ void rungeKutta4(std::vector<double> (*f)(double, const std::vector<double>&), s
         for (int i=0; i<y.size(); i++)
             std::cout << y[i] << "  ";
         std::cout << std::endl;
-    }
+   }
 }
