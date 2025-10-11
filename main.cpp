@@ -60,7 +60,7 @@ int main()
     typedef int FT3(std::vector<double>(double, std::vector<double>&), std::vector<double>&, double, double, double);
     FT3* Milne_Simpson = (FT3*)GetProcAddress(dll3, "Milne_Simpson");
 
-    //RungeKutta(System, y, t0, t1, h);
+    RungeKutta(System, y, t0, t1, h);
     //Adams_Bashforth_Moulton(System, y, t0, t1, h);
     //Milne_Simpson(System, y, t0, t1, h);
 
