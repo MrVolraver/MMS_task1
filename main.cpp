@@ -7,7 +7,7 @@
 
 #define EPS 1e-5
 // коэффициенты
-#define M 0
+#define M 1
 double Kabs[2] = {1.029, 2.481};
 double Kel[2]  = {0.670, 0.649};
 double K1[2]   = {0.118, 0.949};
