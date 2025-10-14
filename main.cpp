@@ -80,6 +80,7 @@ std::vector<double> analytical_solution(double t, std::vector<std::vector<double
     std::vector<double> y;
     y.resize(6);
 
+    // Решение первой подсистемы из y1 y2 y3 методом Эйлера
     // Собственные числа лямбда |A-labmdaE| = 0
     double lambda_1 = Kabs[M];
     double lambda_2 = ((-1)*(K1[M]+Kel[M]+K2[M]) + (sqrt((K1[M]+Kel[M]+K2[M])*(K1[M]+Kel[M]+K2[M])-4*K2[M]*Kel[M])))/2;
