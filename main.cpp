@@ -65,7 +65,7 @@ std::vector<double> gauss(std::vector<std::vector<double>>& A, std::vector<doubl
             x.at(i) -= x.at(j) * A.at(i).at(j);
         }
         if (A.at(i).at(i) == 0)
-            return {-1,-1,-1,-1};
+            return {0,0,0};
         x.at(i) /= A.at(i).at(i);
     }
 
@@ -82,12 +82,14 @@ std::vector<double> analytical_solution(double t, std::vector<std::vector<double
 
     // Решение первой подсистемы из y1 y2 y3 методом Эйлера
     // Собственные числа лямбда |A-labmdaE| = 0
-    double lambda_1 = Kabs[M];
+    double lambda_1 = (-1) * Kabs[M];
     double lambda_2 = ((-1)*(K1[M]+Kel[M]+K2[M]) + (sqrt((K1[M]+Kel[M]+K2[M])*(K1[M]+Kel[M]+K2[M])-4*K2[M]*Kel[M])))/2;
     double lambda_3 = ((-1)*(K1[M]+Kel[M]+K2[M]) - (sqrt((K1[M]+Kel[M]+K2[M])*(K1[M]+Kel[M]+K2[M])-4*K2[M]*Kel[M])))/2;
 
     //Собственные векторы для лямбд |A-labmdaE| = 0
+    std::vector<double> e1_;
     std::vector<double> e1;
+    e1.resize(3);
     std::vector<double> e2;
     std::vector<double> e3;
 
@@ -96,6 +98,12 @@ std::vector<double> analytical_solution(double t, std::vector<std::vector<double
         {Kabs[M],                   -(K1[M]+Kel[M])-lambda_1,    K2[M]},
         {0,                         K1[M],                      -K2[M]-lambda_1}
     };
+
+    std::vector<std::vector<double>> A1_ = {
+        {-(K1[M]+Kel[M])-lambda_1,    K2[M]},
+        {K1[M],                      -K2[M]-lambda_1}
+    };
+
     std::vector<std::vector<double>> A2 = {
         {-Kabs[M]-lambda_2,  0,                  0},
         {Kabs[M],   -(K1[M]+Kel[M])-lambda_2,    K2[M]},
@@ -108,25 +116,29 @@ std::vector<double> analytical_solution(double t, std::vector<std::vector<double
     };
 
     std::vector<double> b = {0,0,0};
+    std::vector<double> b_ = {0,0};
 
-    e1 = gauss(A1,b);
-    e2 = gauss(A3,b);
+    e1_ = gauss(A1_,b_);
+
+    e1[0] = 0; e1[1] = e1_[0]; e1[2] = e1_[1];
+    e2 = gauss(A2,b);
     e3 = gauss(A3,b);
 
     // вычисление С из начальных условий RC = I для у
     std::vector<double> C;
 
     std::vector<std::vector<double>> R = {
-        {exp(lambda_1*initial[0][0])*e1[0],  exp(lambda_2*initial[0][0])*e2[0], exp(lambda_3*initial[0][0])*e3[0]},
-        {exp(lambda_1*initial[1][0])*e1[1],exp(lambda_2*initial[1][0])*e2[1],exp(lambda_3*initial[1][0])*e3[1]},
-        {exp(lambda_1*initial[2][0])*e1[2],exp(lambda_2*initial[2][0])*e2[2],exp(lambda_3*initial[2][0])*e3[2]}
+        {exp(lambda_1*initial[0][0])*e1[0],     exp(lambda_2*initial[0][0])*e2[0],  exp(lambda_3*initial[0][0])*e3[0]},
+        {exp(lambda_1*initial[1][0])*e1[1],     exp(lambda_2*initial[1][0])*e2[1],  exp(lambda_3*initial[1][0])*e3[1]},
+        {exp(lambda_1*initial[2][0])*e1[2],     exp(lambda_2*initial[2][0])*e2[2],  exp(lambda_3*initial[2][0])*e3[2]}
     };
 
     std::vector<double> I = {initial[0][1], initial[1][1],initial[2][1]};
 
     C = gauss(R,I);
 
-    for (int i=0; i<3;i++)
+    y[0] = (initial[0][1] * exp(Kabs[M] * initial[0][0]) / exp(Kabs[M] * t));
+    for (int i=1; i<3;i++)
         y[i] = C[0]*exp(lambda_1*t)*e1[i] + C[1]*exp(lambda_2*t)*e2[i] + C[2]*exp(lambda_3*t)*e3[i];
 
     // вычисление С из начальных условий RC = I для x
@@ -144,7 +156,7 @@ std::vector<double> analytical_solution(double t, std::vector<std::vector<double
 
 int main()
 {
-    std::vector<double> y = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::vector<double> y = { 6.0, 1.0, 4.0, 0.0, 0.0, 0.0};
     double t0 = 0.0, t1 = 10.0, h = 0.1;
 
     HMODULE dll1 = LoadLibrary("RungeKutta.dll");
@@ -172,31 +184,31 @@ int main()
     csv3.open(name3);
 
     RungeKutta(System, y, t0, t1, h, &csv1);
-    y = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    y = { 6.0, 1.0, 4.0, 0.0, 0.0, 0.0};
     Adams_Bashforth_Moulton(System, y, t0, t1, h, &csv3);
-    y = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    y = { 6.0, 1.0, 4.0, 0.0, 0.0, 0.0};
     Milne_Simpson(System, y, t0, t1, h, &csv2);
 
-    // начальные условия
-    std::vector<std::vector<double>> initial = {
-            {0,0},
-            {0,0},
-            {0,0},
-            {0,0},
-            {0,0},
-            {0,0},
-    };
-
-    char* name4 = (char*)"Analytical_solution.csv";
-    std::ofstream csv4;
-    csv4.open(name4);
-
-    for (double t=0.0; t<t1+h; t+=h)
-    {
-        std::vector<double> ya = analytical_solution(t, initial);
-        for (int i=0; i<5; i++)
-            csv4 << ya[i] << ", " ;
-        csv4 << ya[5] << std::endl;
-    }
+    // // начальные условия
+    // std::vector<std::vector<double>> initial = {
+    //         {0,1.0},
+    //         {0,1.0},
+    //         {0,1.0},
+    //         {0,0},
+    //         {0,0},
+    //         {0,0},
+    // };
+    //
+    // char* name4 = (char*)"Analytical_solution.csv";
+    // std::ofstream csv4;
+    // csv4.open(name4);
+    //
+    // for (double t=0.0; t<t1+h; t+=h)
+    // {
+    //     std::vector<double> ya = analytical_solution(t, initial);
+    //     for (int i=0; i<5; i++)
+    //         csv4 << ya[i] << ", " ;
+    //     csv4 << ya[5] << std::endl;
+    // }
     return 0;
 }
